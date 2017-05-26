@@ -385,10 +385,6 @@ class Signature(dict):
                 return group(
                     itertools.chain(self.tasks, other.tasks), app=self.app)
             # group() | task -> chord
-            if len(self.tasks) == 1:
-                # group(ONE.s()) | other -> ONE.s() | other
-                # Issue #3323
-                return self.tasks[0] | other
             return chord(self, body=other, app=self._app)
         elif isinstance(other, group):
             # unroll group with one member
@@ -1236,11 +1232,6 @@ class chord(Signature):
         if app.conf.task_always_eager:
             return self.apply(args, kwargs,
                               body=body, task_id=task_id, **options)
-        if len(self.tasks) == 1:
-            # chord([A], B) can be optimized as A | B
-            # - Issue #3323
-            return (self.tasks[0] | body).set(task_id=task_id).apply_async(
-                args, kwargs, **options)
         # chord([A, B, ...], C)
         return self.run(tasks, body, args, task_id=task_id, **options)
 
